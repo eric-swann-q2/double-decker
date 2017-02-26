@@ -2,46 +2,48 @@
   "name": "double-decker",
   "version": "1.0.0",
   "description": "An action and event store bus",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "gulp lint && gulp build && gulp test"
-  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/remojansen/ts-vscode-boilerplate.git"
+    "url": "git+https://github.com/eric-swann-q2/double-decker.git"
   },
-  "author": "Remo H. Jansen <remo.jansen@wolksoftware.com> (http://www.remojansen.com)",
+  "author": "Eric Swann <eric.swann@q2ebanking.com> (http://www.ericswann.org)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/remojansen/ts-vscode-boilerplate/issues"
+    "url": "https://github.com/eric-swann-q2/double-decker/issues"
   },
-  "homepage": "https://github.com/remojansen/ts-vscode-boilerplate#readme",
-  "devDependencies": {
-    "@types/chai": "^3.4.34",
-    "@types/jquery": "^2.0.33",
-    "@types/mocha": "^2.2.32",
-    "browser-sync": "^2.17.3",
-    "browserify": "^14.0.0",
-    "chai": "^3.5.0",
-    "gulp": "^3.9.1",
-    "gulp-istanbul": "^1.1.1",
-    "gulp-mocha": "^4.0.1",
-    "gulp-sourcemaps": "^2.1.1",
-    "gulp-tslint": "^7.0.1",
-    "gulp-typescript": "^3.1.4",
-    "gulp-uglify": "^2.0.0",
-    "run-sequence": "^1.2.2",
-    "tslint": "4.4.2",
-    "typescript": "^2.0.3",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0",
-    "wallabify": "0.0.14"
+  "keywords": [
+    "typescript",
+    "bus",
+    "messaging"
+  ],
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "clean": "rimraf lib",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc --pretty",
+    "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
+    "watch": "npm run build -- --watch",
+    "watch:test": "npm run test -- --watch"
   },
   "dependencies": {
-    "jquery": "^3.1.1",
-    "tsify": "^3.0.1"
+    "pushid": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.0",
+    "@types/mocha": "^2.2.0",
+    "@types/node": "^6.0.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "rimraf": "^2.6.0",
+    "ts-node": "^2.1.0",
+    "tslint": "^4.4.0",
+    "typescript": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=4.0.0"
   }
 }

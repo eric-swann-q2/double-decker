@@ -1,56 +1,25 @@
-# ts-vscode-boilerplate
+# Using this module in other modules
 
-[![Build Status](https://secure.travis-ci.org/remojansen/ts-vscode-boilerplate.svg?branch=master)](https://travis-ci.org/remojansen/ts-vscode-boilerplate)
-[![Dependencies](https://david-dm.org/remojansen/ts-vscode-boilerplate.svg)](https://david-dm.org/remojansen/ts-vscode-boilerplate#info=dependencies)
-[![img](https://david-dm.org/remojansen/ts-vscode-boilerplate/dev-status.svg)](https://david-dm.org/remojansen/ts-vscode-boilerplate/#info=devDependencies)
-[![img](https://david-dm.org/remojansen/ts-vscode-boilerplate/peer-status.svg)](https://david-dm.org/remojansen/ts-vscode-boilerplate/#info=peerDependenciess)
+Here is a quick example of how this module can be used in other modules. The [TypeScript Module Resolution Logic](https://www.typescriptlang.org/docs/handbook/module-resolution.html) makes it quite easy. The file `src/index.ts` acts as an aggregator of all the functionality in this module. It imports from other files and re-exports to provide a unified interface for this module. The _package.json_ file contains `main` attribute that points to the generated `lib/index.js` file and `typings` attribute that points to the generated `lib/index.d.ts` file.
 
-Boilerplate Visual Studio Code TypeScript project.
+> If you are planning to have code in multiple files (which is quite natural for a NodeJS module) that users can import, make sure you update `src/index.ts` file appropriately.
 
-Please visit [blog.wolksoftware.com](http://blog.wolksoftware.com/setting-up-your-typescript-vs-code-development-environment) to learn more about this template.
+Now assuming you have published this amazing module to _npm_ with the name `my-amazing-lib`, and installed it in the module in which you need it -
 
-> Note: The article uses TypeScript 1.8 and typings but this repository has been upgraded to TypeScript 2.0 and `@types` type definitions.
+- To use the `Greeter` class in a TypeScript file -
 
-# How to use this template?
+```ts
+import { Greeter } from "my-amazing-lib";
 
-1) Download `.zip` and unzip it:
-```
-$ wget https://github.com/remojansen/ts-vscode-boilerplate/archive/master.zip
-$ unzip master.zip
+const greeter = new Greeter("World!");
+greeter.greet();
 ```
 
-2) Install dependencies and their type definitions:
+- To use the `Greeter` class in a JavaScript file -
 
-> Note: Before running the following commands, make sure you have [Node.js]() installed and 
-that you have installed gulp a global package:
->
-> ```
-> $ npm -g install gulp
-> ```
+```js
+const Greeter = require('my-amazing-lib').Greeter;
 
+const greeter = new Greeter('World!');
+greeter.greet();
 ```
-$ cd ts-vscode-boilerplate
-$ npm install
-```
-
-3) Open in VS Code
-
-4) Use `Shift` + `Command` + `p` to open command panel and type "run task":
-
-![](https://raw.githubusercontent.com/remojansen/ts-vscode-boilerplate/master/assets/run-task.png)
-
-5) Select "run task" to see available gulp tasks:
-
-![](https://raw.githubusercontent.com/remojansen/ts-vscode-boilerplate/master/assets/task-list.png)
-
-6) Use `Shift` + `Command` + `=` and select "Start":
-
-![](https://raw.githubusercontent.com/remojansen/ts-vscode-boilerplate/master/assets/enable-wallaby.png)
-
-7) Enjoy real-time tests results powered by [Wallaby.js](http://wallabyjs.com/):
- 
-![](https://raw.githubusercontent.com/remojansen/ts-vscode-boilerplate/master/assets/wallaby.gif)
- 
-8) Enjoy coding with TypeScript!
-
-Please send a PR! If you know how to make this template better.
