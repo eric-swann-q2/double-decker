@@ -6,11 +6,11 @@ import { ActionCallback, EventCallback } from "./message";
 
 export interface IBus {
   receive(type: string, callback: ActionCallback): void;
-  unreceive(type: string, callback: ActionCallback): void;
+  unreceive(type: string, callback: ActionCallback): ActionCallback;
   send(type: string, data: any): Promise<any>;
 
   subscribe(type: string, callback: EventCallback): void;
-  unsubscribe(type: string, callback: EventCallback): void;
+  unsubscribe(type: string, callback: EventCallback): EventCallback;
   publish(type: string, data: any): Array<Promise<any>>;
 }
 
@@ -26,9 +26,10 @@ export class Bus implements IBus {
     this._logger.debug(`Double-Decker Bus: [receive] : Receiver set for ${type}: ${receiver}`);
   }
 
-  unreceive(type: string, receiver: ActionCallback): void {
-    this._emitter.removeReceiver(type.toLowerCase(), receiver);
+  unreceive(type: string, receiver: ActionCallback): ActionCallback {
+    const removed = this._emitter.removeReceiver(type.toLowerCase(), receiver);
     this._logger.debug(`Double-Decker Bus: [unreceive] : Receiver removed for ${type}: ${receiver}`);
+    return removed;
   }
 
   send(type: string, data: any): Promise<any> {
@@ -46,9 +47,10 @@ export class Bus implements IBus {
     this._logger.debug(`Double-Decker Bus: [subscribe] : Appended subscriber for type: ${type} : ${subscriber}`);
   }
 
-  unsubscribe(type: string, subscriber: EventCallback): void {
-    this._emitter.removeSubscriber(type, subscriber);
+  unsubscribe(type: string, subscriber: EventCallback): EventCallback {
+    const removed = this._emitter.removeSubscriber(type, subscriber);
     this._logger.debug(`Double-Decker Bus: [unsubscribe] : Subscriber removed for ${type}: ${subscriber}`);
+    return removed;
   }
 
   publish(type: string, data: any): Array<Promise<any>> {
