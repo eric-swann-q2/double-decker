@@ -1,7 +1,7 @@
 import { IEmitter } from "./emitter";
 import { IStore } from "./store";
 import { ILogger } from "./logger";
-import { IMessageFactory } from "./messageFactory";
+import { IMessageFactory } from "./message-factory";
 import { ActionCallback, EventCallback } from "./message";
 
 export interface IBus {

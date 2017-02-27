@@ -34,9 +34,11 @@
   },
   "devDependencies": {
     "@types/chai": "^3.4.0",
+    "@types/chai-datetime": "0.0.30",
     "@types/mocha": "^2.2.0",
     "@types/node": "^6.0.0",
     "chai": "^3.5.0",
+    "chai-datetime": "^1.4.1",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.0",
     "ts-node": "^2.1.0",
