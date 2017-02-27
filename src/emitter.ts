@@ -97,7 +97,7 @@ export class Emitter implements IEmitter {
     if (subscribers) {
       subscribers.forEach(subscriber => {
         this._logger.debug(`Double-Decker Emitter: [emitEvent] : Emitting Event for type: ${event.type}. Event: ${event}. Subscriber:${subscriber}`);
-        resultPromises.push(subscriber(event));
+        resultPromises.push(Promise.resolve(subscriber(event)));
       });
     }
     return resultPromises;

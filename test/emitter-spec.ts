@@ -31,12 +31,73 @@ describe('When using Action emitter', () => {
   });
 
   it('Errs if adding a duplicate receiver', () => {
-    expect(() => emitter.addReceiver("testActionType", actionReceiver)).to.throw();
+    expect(() => emitter.addReceiver("testActionType", actionReceiver)).to.throw;
   });
 
   it('Can remove a receiver', () => {
     const receiver = emitter.removeReceiver("testActionType", actionReceiver);
     expect(receiver).to.equal(actionReceiver);
+  });
+
+  it('Errs when removing a non-existent receiver type', () => {
+    expect(() => emitter.removeReceiver("testActionTypeBad", actionReceiver)).to.throw;
+  });
+
+  it('Errs when removing a non-existent receiver callback', () => {
+    expect(() => emitter.removeReceiver("testActionType", action => {return null;})).to.throw;
+  });
+
+});
+
+describe('When using Event emitter', () => {
+
+  const emitter: IEmitter = new Emitter(new ConsoleLogger());
+
+  const receivedEvents = new Array<Event<any>>();
+  const eventSubscriber: EventCallback = event => { receivedEvents.push(event); return receivedEvents; }
+
+  const receivedEvents2 = new Array<Event<any>>();
+  const eventSubscriber2: EventCallback = event => { receivedEvents2.push(event); return receivedEvents2; }
+
+  it('Can add and get a subscriber', () => {
+    emitter.addSubscriber("testEventType", eventSubscriber);
+    const subscribers = emitter.getSubscribers("testEventType");
+    expect(subscribers[0]).to.equal(eventSubscriber);
+  });
+
+  it('Can emit an event to the subscriber', () => {
+    let resultPromise = emitter.emitEvent(new Event("testEvent1", "testEventType", { testProp: "testProp" }, new Date()))[0];
+
+    expect(resultPromise).to.eventually.not.be.undefined;
+    expect(resultPromise).to.eventually.have.property("id", "testEvent1");
+  });
+
+  it('Can add a second subscriber for same event type', () => {
+    emitter.addSubscriber("testEventType", eventSubscriber2);
+    const subscribers = emitter.getSubscribers("testEventType");
+    expect(subscribers[1]).to.equal(eventSubscriber2);
+    
+  });
+
+  it('Can emit an events to multiple subscribers', () => {
+    receivedEvents.length = 0;
+    let resultPromises = emitter.emitEvent(new Event("testEventMultiple", "testEventType", { testProp: "testProp" }, new Date()));
+
+    expect(resultPromises[0]).to.eventually.have.property("id", "testEventMultiple");
+    expect(resultPromises[1]).to.eventually.have.property("id", "testEventMultiple");
+  });
+
+  it('Can remove a subscriber', () => {
+    const subscriber = emitter.removeSubscriber("testEventType", eventSubscriber);
+    expect(subscriber).to.equal(eventSubscriber);
+  });
+
+  it('Errs when removing a non-existent subscriber type', () => {
+    expect(() => emitter.removeSubscriber("testEventTypeBad", eventSubscriber)).to.throw;
+  });
+
+  it('Errs when removing a non-existent subscriber callback', () => {
+    expect(() => emitter.removeSubscriber("testEventType", event => {return null;})).to.throw;
   });
 
 });
