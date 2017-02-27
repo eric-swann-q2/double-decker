@@ -20,7 +20,6 @@ export class Bus implements IBus {
     private readonly _messageFactory: IMessageFactory, private readonly _emitter: IEmitter,
     private readonly _store: IStore, private readonly _logger: ILogger) { }
 
-
   receive(type: string, receiver: ActionCallback): void {
     this._emitter.addReceiver(type, receiver);
     this._logger.debug(`Double-Decker Bus: [receive] : Receiver set for ${type}: ${receiver}`);
