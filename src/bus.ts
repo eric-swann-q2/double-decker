@@ -9,7 +9,7 @@ export interface IBus {
   receive(type: string, callback: ActionCallback): void;
   unreceive(type: string, callback: ActionCallback): void;
 
-  publish(type: string, data: any): void;
+  publish(type: string, data: any): Array<Promise<any>>;
   subscribe(type: string, callback: EventCallback): void;
   unsubscribe(type: string, callback: EventCallback): void;
 }
@@ -27,56 +27,36 @@ export class Bus implements IBus {
     const emitResult = this._emitter.emitAction(action);
     this._store.addAction(action);
 
-    return Promise.resolve(emitResult);
+    return emitResult;
   }
 
-  receive(type: string, callback: ActionCallback): void {
-    this._emitter.receivers[type.toLowerCase()] = callback;
-    this._logger.debug(`Double-Decker Bus: [receive] : Receiver set for ${type}: ${callback}`);
+  receive(type: string, receiver: ActionCallback): void {
+    this._emitter.addReceiver(type, receiver);
+    this._logger.debug(`Double-Decker Bus: [receive] : Receiver set for ${type}: ${receiver}`);
   }
 
-  unreceive(type: string, callback: ActionCallback): void {
-    this._emitter.receivers[type.toLowerCase()] = undefined;
-    this._logger.debug(`Double-Decker Bus: [receive] : Receiver removed for ${type}: ${callback}`);
+  unreceive(type: string, receiver: ActionCallback): void {
+    this._emitter.removeReceiver(type.toLowerCase(), receiver);
+    this._logger.debug(`Double-Decker Bus: [unreceive] : Receiver removed for ${type}: ${receiver}`);
   }
 
-  publish(type: string, data: any): void {
+  publish(type: string, data: any): Array<Promise<any>> {
     const event = this._messageFactory.CreateEvent(type, data);
 
     this._logger.debug(`Double-Decker Bus: [publish] : Publishing event: ${event}`);
-    this._emitter.emitEvent(event);
+    const results = this._emitter.emitEvent(event);
     this._store.addEvent(event);
+    return results;
   }
 
-  subscribe(type: string, callback: EventCallback): void {
-    const lowerType = type.toLowerCase();
-    let subscribers = this._emitter.subscribers[lowerType];
-    if (!subscribers) {
-      subscribers = [];
-      this._emitter.subscribers[lowerType] = subscribers;
-    }
-    subscribers.push(callback);
-    this._logger.debug(`Double-Decker Bus: [subscribe] : Appended subscriber: ${callback}`);
+  subscribe(type: string, subscriber: EventCallback): void {
+    this._emitter.addSubscriber(type, subscriber);
+    this._logger.debug(`Double-Decker Bus: [subscribe] : Appended subscriber for type: ${type} : ${subscriber}`);
   }
 
-  unsubscribe(type: string, callback: EventCallback): void {
-    const lowerType = type.toLowerCase();
-    const subscribers = this._emitter.subscribers[lowerType];
-    let subscriberFound = false;
-
-    if (subscribers) {
-      const itemIndex = subscribers.indexOf(callback);
-      if (itemIndex >= 0) {
-        this._logger.debug(`Double-Decker Bus: [unsubscribe] : Removed subscriber at index ${itemIndex}: ${callback}`);
-        subscribers.splice(itemIndex, 1);
-        subscriberFound = true;
-      }
-    }
-    if (!subscriberFound) {
-      const errorMessage = `Double-Decker Bus: [unsubscribe] : Subscriber to unsubscribe was not registered for type ${type}: ${callback}`;
-      this._logger.error(errorMessage);
-      throw new Error(errorMessage);
-    }
+  unsubscribe(type: string, subscriber: EventCallback): void {
+    this._emitter.removeSubscriber(type, subscriber);
+    this._logger.debug(`Double-Decker Bus: [unsubscribe] : Subscriber removed for ${type}: ${subscriber}`);
   }
 
 }

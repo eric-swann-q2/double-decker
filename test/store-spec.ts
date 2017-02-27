@@ -5,7 +5,6 @@ import { Action, Event } from '../src/message';
 import { IStore, MemoryStore } from '../src/store';
 
 describe('When storing actions', () => {
-
   it('Can retrieve stored actions', () => {
     const store:IStore = new MemoryStore();
     const testAction = new Action("testId", "testType", {test:"testData"}, new Date());
@@ -20,11 +19,9 @@ describe('When storing actions', () => {
     store.clearActions();
     expect(store.actions.length).to.equal(0);
   });
-
 });
 
 describe('When storing events', () => {
-
   it('Can retrieve stored events', () => {
     const store:IStore = new MemoryStore();
     const testEvent = new Event("testId", "testType", {test:"testData"}, new Date());
@@ -39,5 +36,4 @@ describe('When storing events', () => {
     store.clearEvents();
     expect(store.events.length).to.equal(0);
   });
-
 });
