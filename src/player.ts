@@ -111,7 +111,7 @@ export class ActionPlayer extends Player<Action<any>> implements IActionPlayer {
   protected readonly _category: Category = Category.Action;
 
   protected _playNext(): Promise<any> {
-    if (this.next.shouldReplay) {
+    if (this.next.behavior.playable) {
       return this._emitter.emitAction(this.next);
     }
   }

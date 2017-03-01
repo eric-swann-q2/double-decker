@@ -28,10 +28,14 @@ describe('When using Action emitter', () => {
   });
 
   it('Can emit an action to the receiver', () => {
-    let resultPromise = bus.send("testActionType", { testProp: "testProp" });
+    let resultPromise = bus.send("testActionType", { testProp: "testActionProp1" });
 
     expect(resultPromise).to.eventually.not.be.undefined;
     expect(resultPromise).to.eventually.have.property("type", "testActionType");
+  });
+
+  it('Records the last action', () => {
+    expect(bus.lastAction.data.testProp).to.equal("testActionProp1");
   });
 
   it('Errs if adding a duplicate receiver', () => {
@@ -70,10 +74,14 @@ describe('When using Event emitter', () => {
   });
 
   it('Can emit an event to the subscriber', () => {
-    let resultPromise = bus.publish("testEventType", { testProp: "testProp" })[0];
+    let resultPromise = bus.publish("testEventType", { testProp: "testEventProp1" })[0];
 
     expect(resultPromise).to.eventually.not.be.undefined;
     expect(resultPromise).to.eventually.have.property("type", "testEventType");
+  });
+
+  it('Records the last event', () => {
+    expect(bus.lastEvent.data.testProp).to.equal("testEventProp1");
   });
 
   it('Can add a second subscriber for same event type', () => {
