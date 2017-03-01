@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 
 import { expect } from 'chai';
-import { Category } from '../src/category';
+import { Category } from '../src/messages/category';
 
 describe('Category Enum', () => {
 

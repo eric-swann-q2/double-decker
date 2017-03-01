@@ -2,39 +2,54 @@ import { IEmitter } from "./emitter";
 import { IStore } from "./store";
 import { ILogger } from "./logger";
 import { IMessageFactory } from "./message-factory";
-import { ActionCallback, EventCallback, Action, Event } from "./message";
+import { Behavior } from "./messages/behavior";
+import { MessageContract } from "./messages/message-contract";
+import { Action, Event } from "./messages/message";
+import { ActionCallback, EventCallback } from "./messages/callbacks";
 
 /** Interface describing all service bus operations */
 export interface IBus {
+
+  /** The last action sent by the bus */
+  readonly lastAction: Action<any>;
+  /** The last event published by the bus */
+  readonly lastEvent: Event<any>;
+
   /** Sign up an ActionCallback to receive actions */
   receive(type: string, callback: ActionCallback): void;
   /** Remove an ActionCallback from receiving actions */
   unreceive(type: string, callback: ActionCallback): ActionCallback;
   /** Send an action to a registered receiver */
-  send(type: string, data: any): Promise<any>;
-  /** The last action sent by the bus */
-  readonly lastAction: Action<any>;
+  send<T>(action: MessageContract<T>): Promise<any>;
+  /** Send an action to a registered receiver */
+  createAndSend(type: string, data: any): Promise<any>;
 
   /** Sign up an EventCallback to receive events */
   subscribe(type: string, callback: EventCallback): void;
   /** Remove an EventCallback from receiving events */
   unsubscribe(type: string, callback: EventCallback): EventCallback;
   /** Publish an event to all subscribers */
-  publish(type: string, data: any): Array<Promise<any>>;
-  /** The last action sent by the bus */
-  readonly lastEvent: Event<any>;
+  publish<T>(event: MessageContract<T>): Array<Promise<any>>;
+  /** Publish an event to all subscribers */
+  createAndPublish(type: string, data: any): Array<Promise<any>>;
 }
 
-/** Service bus class used to send and publish messages, 
- * as well as subscribe to messages. */
+/** Service bus class used to send and publish messages, as well as subscribe to messages. */
 export class Bus implements IBus {
-
-  private _lastAction: Action<any>;
-  private _lastEvent: Event<any>;
 
   constructor(
     private readonly _messageFactory: IMessageFactory, private readonly _emitter: IEmitter,
     private readonly _store: IStore, private readonly _logger: ILogger) { }
+
+  /** The last action sent by the bus */
+  get lastAction(): Action<any> {
+    return this._emitter.lastAction;
+  }
+
+  /** The last event sent by the bus */
+  get lastEvent(): Event<any> {
+    return this._emitter.lastEvent;
+  }
 
   /** Sign up an ActionCallback to receive actions */
   receive(type: string, receiver: ActionCallback): void {
@@ -50,19 +65,18 @@ export class Bus implements IBus {
   }
 
   /** Send an action to a registered receiver */
-  send(type: string, data: any): Promise<any> {
-    const action = this._messageFactory.CreateAction(type, data);
+  send<T>(actionContract: MessageContract<T>): Promise<any> {
+    const action = this._messageFactory.CreateAction(actionContract);
 
     this._logger.debug(`Double-Decker Bus: [send] : Sending action: ${action}`);
     const emitResult = this._emitter.emitAction(action);
     this._store.addAction(action);
-    this._lastAction = action;
     return emitResult;
   }
 
-  /** The last action sent by the bus */
-  get lastAction(): Action<any> {
-    return this._lastAction;
+  /** Send an action to a registered receiver */
+  createAndSend(type: string, data: any): Promise<any> {
+    return this.send(new MessageContract(type, data));
   }
 
   /** Sign up an EventCallback to receive events */
@@ -79,19 +93,18 @@ export class Bus implements IBus {
   }
 
   /** Publish an event to all subscribers */
-  publish(type: string, data: any): Array<Promise<any>> {
-    const event = this._messageFactory.CreateEvent(type, data);
+  publish<T>(eventContract: MessageContract<T>): Array<Promise<any>> {
+    const event = this._messageFactory.CreateEvent(eventContract);
 
     this._logger.debug(`Double-Decker Bus: [publish] : Publishing event: ${event}`);
     const results = this._emitter.emitEvent(event);
     this._store.addEvent(event);
-    this._lastEvent = event;
     return results;
   }
 
-  /** The last event sent by the bus */
-  get lastEvent(): Event<any> {
-    return this._lastEvent;
+  /** Send an action to a registered receiver */
+  createAndPublish(type: string, data: any): Array<Promise<any>> {
+    return this.publish(new MessageContract(type, data));
   }
 
 }

@@ -1,31 +1,37 @@
 import { createId } from "./push-id";
-import { Action, Event } from "./message";
+import { Action, Event } from "./messages/message";
+import { MessageContract } from "./messages/message-contract";
 
+/** Interface use to create new messages from message contracts */
 export interface IMessageFactory {
-  CreateAction<T>(type: string, data: T): Action<T>;
-  CreateEvent<T>(type: string, data: T): Event<T>;
+  CreateAction<T>(actionContract: MessageContract<T>): Action<T>;
+  CreateEvent<T>(eventContract: MessageContract<T>): Event<T>;
 }
 
+/** Used to create new messages from message contracts */
 export class MessageFactory implements IMessageFactory {
 
-  CreateAction<T>(type: string, data: T): Action<T> {
-    return new Action<T>(createId(), type.toLowerCase(), data, new Date());
+  CreateAction<T>(actionContract: MessageContract<T>): Action<T> {
+    return new Action<T>(createId(), actionContract.type.toLowerCase(), actionContract.data, new Date(), actionContract.behavior);
   }
 
-  CreateEvent<T>(type: string, data: T): Event<T> {
-    return new Event<T>(createId(), type.toLowerCase(), data, new Date());
+  CreateEvent<T>(eventContract: MessageContract<T>): Event<T> {
+    return new Event<T>(createId(), eventContract.type.toLowerCase(), eventContract.data, new Date(), eventContract.behavior);
   }
+
 }
 
+/** Used to create new messages from message contracts. The ID is retrieved from a property on the included data. Primarily used for testing. */
 export class DataWithIdMessageFactory {
 
   constructor(public idProperty: string = "id") { }
 
-  CreateAction<T>(type: string, data: T): Action<T> {
-    return new Action<T>(data[this.idProperty], type.toLowerCase(), data, new Date());
+  CreateAction<T>(actionContract: MessageContract<T>): Action<T> {
+    return new Action<T>(actionContract.data[this.idProperty], actionContract.type.toLowerCase(), actionContract.data, new Date(), actionContract.behavior);
   }
 
-  CreateEvent<T>(type: string, data: T): Event<T> {
-    return new Event<T>(data[this.idProperty], type.toLowerCase(), data, new Date());
+  CreateEvent<T>(eventContract: MessageContract<T>): Event<T> {
+    return new Event<T>(eventContract.data[this.idProperty], eventContract.type.toLowerCase(), eventContract.data, new Date(), eventContract.behavior);
   }
+
 }

@@ -23,7 +23,7 @@ describe('Logger', () => {
   });
 
   it('Should successfully log debug with multiple arguments', () => {
-    logger.debug('Test Message Debug', {test:'test', thing:'thing'});
+    logger.debug('Test Message Debug', { test: 'test', thing: 'thing' });
   });
 
 });

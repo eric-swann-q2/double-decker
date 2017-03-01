@@ -1,8 +1,8 @@
 import { IEmitter } from "./emitter";
 import { ILogger } from "./logger";
-import { Category } from "./category";
+import { Category } from "./messages/category";
 import { IStore } from "./store";
-import { Action, Event, Message } from "./message";
+import { Action, Event, Message } from "./messages/message";
 
 export interface IPlayer<TMessage extends Message<any>> {
   readonly messages: TMessage[];
@@ -53,10 +53,8 @@ export abstract class Player<TMessage extends Message<any>> implements IPlayer<T
 
   setHead(position: number): void {
     if (position < 0 || position >= this.messages.length) {
-      const errorMessage = `Double-Decker Hub: [setHead] : Attempted to set read head outside of message range. 
-                            Attempted value:${position}. Max value:${this.messages.length}`;
-      this._logger.error(errorMessage);
-      throw new Error(errorMessage);
+      this._throwError(`Double-Decker Hub: [setHead] : Attempted to set read head outside of message range. 
+        Attempted value:${position}. Max value:${this.messages.length}`);
     }
     this._headPosition = position;
   }
@@ -64,9 +62,7 @@ export abstract class Player<TMessage extends Message<any>> implements IPlayer<T
   setHeadById(messageId: string): void {
     const position = this.messages.findIndex(msg => msg.id === messageId);
     if (position < 0) {
-      const errorMessage = `Double-Decker Hub: [setHeadById] : Could not find the requested messageId: ${messageId}`;
-      this._logger.error(errorMessage);
-      throw new Error(errorMessage);
+      this._throwError(`Double-Decker Hub: [setHeadById] : Could not find the requested messageId: ${messageId}`);
     }
     this._headPosition = position;
   }
@@ -94,6 +90,11 @@ export abstract class Player<TMessage extends Message<any>> implements IPlayer<T
 
   protected abstract _clearMessages(): void;
   protected abstract _playNext(): Promise<any>;
+
+  protected _throwError(errorMessage: string): void {
+    this._logger.error(errorMessage);
+    throw new Error(errorMessage);
+  }
 
 }
 

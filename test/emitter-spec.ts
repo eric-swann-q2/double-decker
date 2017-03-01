@@ -6,7 +6,8 @@ import * as chai from 'chai';
 import { expect } from 'chai';
 import { Emitter, IEmitter } from '../src/emitter';
 import { ConsoleLogger } from '../src/logger';
-import { ActionCallback, Action, EventCallback, Event } from '../src/message';
+import { Action, Event } from '../src/messages/message';
+import { ActionCallback, EventCallback } from '../src/messages/callbacks';
 
 chai.use(chaiAsPromised);
 
@@ -44,7 +45,7 @@ describe('When using Action emitter', () => {
   });
 
   it('Errs when removing a non-existent receiver callback', () => {
-    expect(() => emitter.removeReceiver("testActionType", action => {return null;})).to.throw;
+    expect(() => emitter.removeReceiver("testActionType", action => { return null; })).to.throw;
   });
 
 });
@@ -76,7 +77,7 @@ describe('When using Event emitter', () => {
     emitter.addSubscriber("testEventType", eventSubscriber2);
     const subscribers = emitter.getSubscribers("testEventType");
     expect(subscribers[1]).to.equal(eventSubscriber2);
-    
+
   });
 
   it('Can emit an events to multiple subscribers', () => {
@@ -97,7 +98,7 @@ describe('When using Event emitter', () => {
   });
 
   it('Errs when removing a non-existent subscriber callback', () => {
-    expect(() => emitter.removeSubscriber("testEventType", event => {return null;})).to.throw;
+    expect(() => emitter.removeSubscriber("testEventType", event => { return null; })).to.throw;
   });
 
 });

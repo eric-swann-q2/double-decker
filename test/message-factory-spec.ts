@@ -1,10 +1,11 @@
+import { MessageContract } from '../src/messages/message-contract';
 /// <reference path="../node_modules/@types/mocha/index.d.ts" />
 /// <reference path="../node_modules/@types/chai-datetime/index.d.ts" />
 
 import * as chaiDateTime from 'chai-datetime/chai-datetime';
 import * as chai from 'chai';
 import { expect } from 'chai';
-import { Category } from '../src/category';
+import { Category } from '../src/messages/category';
 import { IMessageFactory, MessageFactory } from '../src/message-factory';
 
 chai.use(chaiDateTime);
@@ -12,7 +13,7 @@ chai.use(chaiDateTime);
 describe('When creating an action', () => {
 
   let factory: IMessageFactory = new MessageFactory();
-  const action = factory.CreateAction("TestAction", { test: "testAction", thingy: "thingy" });
+  const action = factory.CreateAction(new MessageContract("TestAction", { test: "testAction", thingy: "thingy" }));
 
   it('Should have Action category', () => {
     expect(action.category).to.equal(Category.Action);
@@ -39,7 +40,7 @@ describe('When creating an action', () => {
 describe('When creating an event', () => {
 
   let factory: IMessageFactory = new MessageFactory();
-  const event = factory.CreateEvent("TestEvent", { test: "testEvent", thingy: "thingy" });
+  const event = factory.CreateEvent(new MessageContract("TestEvent", { test: "testEvent", thingy: "thingy" }));
 
   it('Should have Event category', () => {
     expect(event.category).to.equal(Category.Event);

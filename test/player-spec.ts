@@ -10,7 +10,8 @@ import { DataWithIdMessageFactory } from '../src/message-factory';
 import { IBus, Bus } from '../src/bus';
 import { IActionPlayer, ActionPlayer, IEventPlayer, EventPlayer } from '../src/player';
 import { ConsoleLogger } from '../src/logger';
-import { ActionCallback, Action, EventCallback, Event } from '../src/message';
+import { Action, Event } from '../src/messages/message';
+import { ActionCallback, EventCallback } from '../src/messages/callbacks';
 
 chai.use(chaiAsPromised);
 const logger = new ConsoleLogger;
@@ -26,13 +27,15 @@ describe('When using Action player', () => {
   const actionReceiver: ActionCallback = action => { receivedActions.push(action); return receivedActions; }
 
   bus.receive("testActionType", actionReceiver);
-  let resultPromise = bus.send("testActionType", { itemId: "test1" });
-  let resultPromise2 = bus.send("testActionType", { itemId: "test2" });
-  let resultPromise3 = bus.send("testActionType", { itemId: "test3" });
-  let resultPromise4 = bus.send("testActionType", { itemId: "test4" });
+  let resultPromise = bus.createAndSend("testActionType", { itemId: "test1" });
+  let resultPromise2 = bus.createAndSend("testActionType", { itemId: "test2" });
+  let resultPromise3 = bus.createAndSend("testActionType", { itemId: "test3" });
+  let resultPromise4 = bus.createAndSend("testActionType", { itemId: "test4" });
+  let resultPromise5 = bus.createAndSend("testActionType", { itemId: "test5" });
+  let resultPromise6 = bus.createAndSend("testActionType", { itemId: "test6" });
 
   it('Can see all published actions', () => {
-    expect(player.messages.length).to.equal(4);
+    expect(player.messages.length).to.equal(6);
   });
 
   it('Can play the first action', () => {
@@ -82,10 +85,10 @@ describe('When using Event player', () => {
   const eventSubscriber: EventCallback = event => { subscribedEvents.push(event); return subscribedEvents; }
 
   bus.subscribe("testEventType", eventSubscriber);
-  let resultPromise = bus.publish("testEventType", { itemId: "test1" });
-  let resultPromise2 = bus.publish("testEventType", { itemId: "test2" });
-  let resultPromise3 = bus.publish("testEventType", { itemId: "test3" });
-  let resultPromise4 = bus.publish("testEventType", { itemId: "test4" });
+  let resultPromise = bus.createAndPublish("testEventType", { itemId: "test1" });
+  let resultPromise2 = bus.createAndPublish("testEventType", { itemId: "test2" });
+  let resultPromise3 = bus.createAndPublish("testEventType", { itemId: "test3" });
+  let resultPromise4 = bus.createAndPublish("testEventType", { itemId: "test4" });
 
   it('Can see all published events', () => {
     expect(player.messages.length).to.equal(4);

@@ -9,14 +9,15 @@ import { MemoryStore } from '../src/store';
 import { MessageFactory } from '../src/message-factory';
 import { IBus, Bus } from '../src/bus';
 import { ConsoleLogger } from '../src/logger';
-import { ActionCallback, Action, EventCallback, Event } from '../src/message';
+import { Action, Event } from '../src/messages/message';
+import { ActionCallback, EventCallback } from '../src/messages/callbacks';
 
 chai.use(chaiAsPromised);
 const logger = new ConsoleLogger;
 
 describe('When using Action emitter', () => {
   const emitter = new Emitter(logger);
-  const bus:IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
+  const bus: IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
 
   const receivedActions = new Array<Action<any>>();
   const actionReceiver: ActionCallback = action => { receivedActions.push(action); return receivedActions; }
@@ -28,7 +29,7 @@ describe('When using Action emitter', () => {
   });
 
   it('Can emit an action to the receiver', () => {
-    let resultPromise = bus.send("testActionType", { testProp: "testActionProp1" });
+    let resultPromise = bus.createAndSend("testActionType", { testProp: "testActionProp1" });
 
     expect(resultPromise).to.eventually.not.be.undefined;
     expect(resultPromise).to.eventually.have.property("type", "testActionType");
@@ -52,14 +53,14 @@ describe('When using Action emitter', () => {
   });
 
   it('Errs when removing a non-existent receiver callback', () => {
-    expect(() => bus.unreceive("testActionType", action => {return null;})).to.throw;
+    expect(() => bus.unreceive("testActionType", action => { return null; })).to.throw;
   });
 });
 
 describe('When using Event emitter', () => {
 
   const emitter = new Emitter(logger);
-  const bus:IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
+  const bus: IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
 
   const receivedEvents = new Array<Event<any>>();
   const eventSubscriber: EventCallback = event => { receivedEvents.push(event); return receivedEvents; }
@@ -74,7 +75,7 @@ describe('When using Event emitter', () => {
   });
 
   it('Can emit an event to the subscriber', () => {
-    let resultPromise = bus.publish("testEventType", { testProp: "testEventProp1" })[0];
+    let resultPromise = bus.createAndPublish("testEventType", { testProp: "testEventProp1" })[0];
 
     expect(resultPromise).to.eventually.not.be.undefined;
     expect(resultPromise).to.eventually.have.property("type", "testEventType");
@@ -92,7 +93,7 @@ describe('When using Event emitter', () => {
 
   it('Can emit an events to multiple subscribers', () => {
     receivedEvents.length = 0;
-    let resultPromises = bus.publish("testEventType", { testProp: "testProp" });
+    let resultPromises = bus.createAndPublish("testEventType", { testProp: "testProp" });
 
     expect(resultPromises[0]).to.eventually.have.property("id", "testEventMultiple");
     expect(resultPromises[1]).to.eventually.have.property("id", "testEventMultiple");
@@ -108,7 +109,7 @@ describe('When using Event emitter', () => {
   });
 
   it('Errs when removing a non-existent subscriber callback', () => {
-    expect(() => bus.unsubscribe("testEventType", event => {return null;})).to.throw;
+    expect(() => bus.unsubscribe("testEventType", event => { return null; })).to.throw;
   });
 
 });
