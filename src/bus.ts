@@ -18,7 +18,7 @@ export interface IBus {
   /** Sign up an ActionCallback to receive actions */
   receive(type: string, callback: ActionCallback): void;
   /** Remove an ActionCallback from receiving actions */
-  unreceive(type: string, callback: ActionCallback): ActionCallback;
+  unreceive(type: string, callback: ActionCallback): void;
   /** Send an action to a registered receiver */
   send<T>(action: MessageContract<T>): Promise<any>;
   /** Send an action to a registered receiver */
@@ -27,11 +27,11 @@ export interface IBus {
   /** Sign up an EventCallback to receive events */
   subscribe(type: string, callback: EventCallback): void;
   /** Remove an EventCallback from receiving events */
-  unsubscribe(type: string, callback: EventCallback): EventCallback;
+  unsubscribe(type: string, callback: EventCallback): void;
   /** Publish an event to all subscribers */
-  publish<T>(event: MessageContract<T>): Array<Promise<any>>;
+  publish<T>(event: MessageContract<T>): Promise<any>;
   /** Publish an event to all subscribers */
-  createAndPublish(type: string, data: any): Array<Promise<any>>;
+  createAndPublish(type: string, data: any): Promise<any>;
 }
 
 /** Service bus class used to send and publish messages, as well as subscribe to messages. */
@@ -58,10 +58,9 @@ export class Bus implements IBus {
   }
 
   /** Remove an ActionCallback from receiving actions */
-  unreceive(type: string, receiver: ActionCallback): ActionCallback {
+  unreceive(type: string, receiver: ActionCallback): void {
     const removed = this._emitter.removeReceiver(type.toLowerCase(), receiver);
     this._logger.debug(`Double-Decker Bus: [unreceive] : Receiver removed for ${type}: ${receiver}`);
-    return removed;
   }
 
   /** Send an action to a registered receiver */
@@ -86,24 +85,22 @@ export class Bus implements IBus {
   }
 
   /** Remove an EventCallback from receiving events */
-  unsubscribe(type: string, subscriber: EventCallback): EventCallback {
+  unsubscribe(type: string, subscriber: EventCallback): void {
     const removed = this._emitter.removeSubscriber(type, subscriber);
     this._logger.debug(`Double-Decker Bus: [unsubscribe] : Subscriber removed for ${type}: ${subscriber}`);
-    return removed;
   }
 
   /** Publish an event to all subscribers */
-  publish<T>(eventContract: MessageContract<T>): Array<Promise<any>> {
+  publish<T>(eventContract: MessageContract<T>): Promise<any> {
     const event = this._messageFactory.CreateEvent(eventContract);
 
     this._logger.debug(`Double-Decker Bus: [publish] : Publishing event: ${event}`);
-    const results = this._emitter.emitEvent(event);
     this._store.addEvent(event);
-    return results;
+    return this._emitter.emitEvent(event);
   }
 
   /** Send an action to a registered receiver */
-  createAndPublish(type: string, data: any): Array<Promise<any>> {
+  createAndPublish(type: string, data: any): Promise<any> {
     return this.publish(new MessageContract(type, data));
   }
 

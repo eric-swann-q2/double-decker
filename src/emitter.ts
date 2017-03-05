@@ -12,26 +12,22 @@ export interface IEmitter {
   /** Adds an action receiver */
   addReceiver(type: string, receiver: ActionCallback): void;
   /** Removes an action receiver */
-  removeReceiver(type: string, receiver: ActionCallback): ActionCallback;
-  /** Gets an action receiver */
-  getReceiver(type: string): ActionCallback;
+  removeReceiver(type: string, receiver: ActionCallback): void;
   /** Emit an action to the action receiver */
   emitAction(action: Action<any>): Promise<any>;
 
   /** Adds an event subscriber */
   addSubscriber(type: string, subscriber: EventCallback): void;
   /** Removes an event subscriber */
-  removeSubscriber(type: string, subscriber: EventCallback): EventCallback;
-  /** Gets event subscribers */
-  getSubscribers(type: string): EventCallback[];
+  removeSubscriber(type: string, subscriber: EventCallback): void;
   /** Emit an event to all event subscribers */
-  emitEvent(event: Event<any>): Array<Promise<any>>;
+  emitEvent(event: Event<any>): Promise<any>;
 }
 
 /** An emitter emits actions and events to receivers and subscribers */
 export class Emitter implements IEmitter {
-  private _receiverStore = {};
-  private _subscriberStore = {};
+  private _receiverStore = new Map<string, ActionCallback>();
+  private _subscriberStore = new Map<string, EventCallback[]>();
 
   private _lastAction: Action<any>;
   private _lastEvent: Event<any>;
@@ -51,36 +47,35 @@ export class Emitter implements IEmitter {
   /** Adds an action receiver */
   addReceiver(type: string, receiver: ActionCallback): void {
     const lowerType = type.toLowerCase();
-    const existingReceiver = this._receiverStore[lowerType];
+    const existingReceiver = this._receiverStore.get(lowerType);
     if (existingReceiver) {
       this._throwError(`Double-Decker Emitter: [addReceiver] : Action receiver was already present for type ${type}: Receiver: ${existingReceiver}`);
     }
 
     this._logger.debug(`Double-Decker Emitter: [addReceiver] : Adding Action receiver for type: ${type}: Receiver: ${receiver}`);
-    this._receiverStore[lowerType] = receiver;
+    this._receiverStore.set(lowerType, receiver);
   }
 
   /** Removes an action receiver */
-  removeReceiver(type: string, receiver: ActionCallback): ActionCallback {
+  removeReceiver(type: string, receiver: ActionCallback): void {
     const lowerType = type.toLowerCase();
-    const existingReceiver = this._receiverStore[lowerType];
+    const existingReceiver = this._receiverStore.get(lowerType);
     if (!existingReceiver || receiver !== existingReceiver) {
       this._throwError(`Double-Decker Emitter: [removeReceiver] : Action receiver to remove was not registered for type ${type}: Receiver: ${receiver}`);
     }
-    this._receiverStore[lowerType] = undefined;
+    this._receiverStore.delete(lowerType);
     this._logger.debug(`Double-Decker Emitter: [removeReceiver] : Removed Action receiver for type: ${type}: Receiver: ${receiver}`);
-    return receiver;
   }
 
   /** Gets an action receiver */
   getReceiver(type: string): ActionCallback {
     this._logger.debug(`Double-Decker Emitter: [getReceiver] : Getting Action receiver for type: ${type}.`);
-    return this._receiverStore[type.toLowerCase()];
+    return this._receiverStore.get(type.toLowerCase());
   }
 
   /** Emit an action to the action receiver */
   emitAction(action: Action<any>): Promise<any> {
-    const receiver: ActionCallback = this._receiverStore[action.type.toLowerCase()];
+    const receiver = this._receiverStore.get(action.type.toLowerCase());
     if (!receiver) {
       this._throwError(`Double-Decker Emitter: [emitAction] : Receiver was not registered for type ${action.type}.`);
     }
@@ -94,27 +89,27 @@ export class Emitter implements IEmitter {
   /** Adds an event subscriber */
   addSubscriber(type: string, subscriber: EventCallback): void {
     const lowerType = type.toLowerCase();
-    let subscribers = this._subscriberStore[lowerType];
+    let subscribers = this._subscriberStore.get(lowerType);
     if (!subscribers) {
       this._logger.debug(`Double-Decker Emitter: [addSubscriber] : No subscribers registered for type: ${type}. Registering a new store array.`);
       subscribers = new Array<EventCallback>();
-      this._subscriberStore[lowerType] = subscribers;
+      this._subscriberStore.set(lowerType, subscribers);
     }
     subscribers.push(subscriber);
     this._logger.debug(`Double-Decker Emitter: [addSubscriber] : Added subscriber for type: ${type} : ${subscriber}`);
   }
 
   /** Removes an event subscriber */
-  removeSubscriber(type: string, subscriber: EventCallback): EventCallback {
+  removeSubscriber(type: string, subscriber: EventCallback): void {
     const lowerType = type.toLowerCase();
-    const subscribers = this._subscriberStore[lowerType];
+    const subscribers = this._subscriberStore.get(lowerType);
 
     if (subscribers) {
       const itemIndex = subscribers.indexOf(subscriber);
       if (itemIndex >= 0) {
         subscribers.splice(itemIndex, 1);
         this._logger.debug(`Double-Decker Emitter: [removeSubscriber] : Removed subscriber at index ${itemIndex}: Subscriber: ${subscriber}`);
-        return subscriber;
+        return;
       }
     }
     this._throwError(`Double-Decker Emitter: [removeSubscriber] : Subscriber to unsubscribe was not registered for type ${type}: ${subscriber}`);
@@ -123,13 +118,13 @@ export class Emitter implements IEmitter {
   /** Gets event subscribers */
   getSubscribers(type: string): EventCallback[] {
     this._logger.debug(`Double-Decker Emitter: [getSubscribers] : Getting Event subscribers for type: ${type}.`);
-    return this._subscriberStore[type.toLowerCase()];
+    return this._subscriberStore.get(type.toLowerCase());
   }
 
   /** Emit an event to all event subscribers */
-  emitEvent(event: Event<any>): Array<Promise<any>> {
+  emitEvent(event: Event<any>): Promise<any> {
     const resultPromises = new Array<Promise<any>>();
-    const subscribers: EventCallback[] = this._subscriberStore[event.type.toLowerCase()];
+    const subscribers = this._subscriberStore.get(event.type.toLowerCase());
     if (subscribers) {
       subscribers.forEach(subscriber => {
         this._logger.debug(`Double-Decker Emitter: [emitEvent] : Emitting Event for type: ${event.type}. Event: ${event}. Subscriber:${subscriber}`);
@@ -140,7 +135,7 @@ export class Emitter implements IEmitter {
       event.actionId = this.lastAction.id;
     }
     this._lastEvent = event;
-    return resultPromises;
+    return Promise.all(resultPromises);
   }
 
   private _throwError(errorMessage: string): void {

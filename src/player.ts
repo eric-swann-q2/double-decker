@@ -136,7 +136,7 @@ export class EventPlayer extends Player<Event<any>> implements IEventPlayer {
   protected readonly _category: Category = Category.Event;
 
   protected _playNext(): Promise<any> {
-    return Promise.all(this._emitter.emitEvent(this.next));
+    return this._emitter.emitEvent(this.next);
   }
 
   protected _clearMessages(): void {

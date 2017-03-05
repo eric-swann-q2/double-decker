@@ -44,8 +44,9 @@ describe('When using Action emitter', () => {
   });
 
   it('Can remove a receiver', () => {
-    const receiver = bus.unreceive("testActionType", actionReceiver);
-    expect(receiver).to.equal(actionReceiver);
+    bus.unreceive("testActionType", actionReceiver);
+    const receiver = emitter.getReceiver("testActionType");
+    expect(receiver).to.be.empty;
   });
 
   it('Errs when removing a non-existent receiver type', () => {
@@ -75,7 +76,7 @@ describe('When using Event emitter', () => {
   });
 
   it('Can emit an event to the subscriber', () => {
-    let resultPromise = bus.createAndPublish("testEventType", { testProp: "testEventProp1" })[0];
+    let resultPromise = bus.createAndPublish("testEventType", { testProp: "testEventProp1" });
 
     expect(resultPromise).to.eventually.not.be.undefined;
     expect(resultPromise).to.eventually.have.property("type", "testEventType");
@@ -93,15 +94,16 @@ describe('When using Event emitter', () => {
 
   it('Can emit an events to multiple subscribers', () => {
     receivedEvents.length = 0;
-    let resultPromises = bus.createAndPublish("testEventType", { testProp: "testProp" });
+    let resultPromise = bus.createAndPublish("testEventType", { testProp: "testProp" });
 
-    expect(resultPromises[0]).to.eventually.have.property("id", "testEventMultiple");
-    expect(resultPromises[1]).to.eventually.have.property("id", "testEventMultiple");
+    expect(resultPromise).to.eventually.have.property("[0].id", "testEventMultiple");
+    expect(resultPromise).to.eventually.have.property("[0].id", "testEventMultiple");
   });
 
   it('Can remove a subscriber', () => {
-    const subscriber = bus.unsubscribe("testEventType", eventSubscriber);
-    expect(subscriber).to.equal(eventSubscriber);
+    bus.unsubscribe("testEventType", eventSubscriber);
+    const subscribers = emitter.getSubscribers("testEventType");
+    expect(subscribers).to.not.contain(eventSubscriber);
   });
 
   it('Errs when removing a non-existent subscriber type', () => {
