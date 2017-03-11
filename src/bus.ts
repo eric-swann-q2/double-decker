@@ -6,6 +6,7 @@ import { Behavior } from "./messages/behavior";
 import { MessageContract } from "./messages/message-contract";
 import { Action, Event } from "./messages/message";
 import { ActionCallback, EventCallback } from "./messages/callbacks";
+import { SystemMessage, MessageStatusData } from "./messages/systemMessage";
 
 /** Interface describing all service bus operations */
 export interface IBus {
@@ -20,18 +21,18 @@ export interface IBus {
   /** Remove an ActionCallback from receiving actions */
   unreceive(type: string, callback: ActionCallback): void;
   /** Send an action to a registered receiver */
-  send<T>(action: MessageContract<T>): Promise<any>;
+  send<T>(action: MessageContract<T>): void;
   /** Send an action to a registered receiver */
-  createAndSend(type: string, data: any): Promise<any>;
+  createAndSend(type: string, data: any): void;
 
   /** Sign up an EventCallback to receive events */
   subscribe(type: string, callback: EventCallback): void;
   /** Remove an EventCallback from receiving events */
   unsubscribe(type: string, callback: EventCallback): void;
   /** Publish an event to all subscribers */
-  publish<T>(event: MessageContract<T>): Promise<any>;
+  publish<T>(event: MessageContract<T>): void;
   /** Publish an event to all subscribers */
-  createAndPublish(type: string, data: any): Promise<any>;
+  createAndPublish(type: string, data: any): void;
 }
 
 /** Service bus class used to send and publish messages, as well as subscribe to messages. */
@@ -64,17 +65,23 @@ export class Bus implements IBus {
   }
 
   /** Send an action to a registered receiver */
-  send<T>(actionContract: MessageContract<T>): Promise<any> {
+  send<T>(actionContract: MessageContract<T>): void {
     const action = this._messageFactory.CreateAction(actionContract);
+    this._emitSystemMessage(SystemMessage.ActionSent, action.id);
 
     this._logger.debug(`Double-Decker Bus: [send] : Sending action: ${action}`);
-    const emitResult = this._emitter.emitAction(action);
-    this._store.addAction(action);
-    return emitResult;
+    this._emitter.emitAction(action)
+      .then(result => {
+        this._store.addAction(action);
+        this._emitSystemMessage(SystemMessage.ActionSent, action.id);
+      })
+      .catch(error => {
+        this._emitSystemMessage(SystemMessage.ActionErred, action.id, error);
+      });
   }
 
   /** Send an action to a registered receiver */
-  createAndSend(type: string, data: any): Promise<any> {
+  createAndSend(type: string, data: any): void {
     return this.send(new MessageContract(type, data));
   }
 
@@ -91,17 +98,33 @@ export class Bus implements IBus {
   }
 
   /** Publish an event to all subscribers */
-  publish<T>(eventContract: MessageContract<T>): Promise<any> {
+  publish<T>(eventContract: MessageContract<T>): void {
     const event = this._messageFactory.CreateEvent(eventContract);
-
     this._logger.debug(`Double-Decker Bus: [publish] : Publishing event: ${event}`);
-    this._store.addEvent(event);
-    return this._emitter.emitEvent(event);
+
+    this._emitter.emitEvent(event)
+      .then(result => {
+        this._store.addEvent(event);
+        this._emitSystemMessage(SystemMessage.EventPublished, event.id);
+      })
+      .catch(error => {
+        this._emitSystemMessage(SystemMessage.EventErred, event.id, error);
+      });
   }
 
   /** Send an action to a registered receiver */
-  createAndPublish(type: string, data: any): Promise<any> {
-    return this.publish(new MessageContract(type, data));
+  createAndPublish(type: string, data: any): void {
+    this.publish(new MessageContract(type, data));
   }
 
+  private _emitSystemMessage(type: SystemMessage, originalMessageId: string, error: Error = null) {
+    const systemMessage = this._messageFactory.CreateSystemEvent(type, new MessageStatusData(originalMessageId, error));
+    this._logger.debug(`Double-Decker Bus: [emitSystemMessage] 
+      : Emitting a system message: ${type} : ID ${systemMessage.id} : OriginalMessageId: ${originalMessageId}`);
+    if (type === SystemMessage.ActionErred || type === SystemMessage.EventErred) {
+      this._logger.error(`Double-Decker Bus: [emitSystemMessage] 
+      : Message Failure: ${type} : ID ${systemMessage.id} : OriginalMessageId: ${originalMessageId} : Error: ${error}`);
+    }
+    this._emitter.emitEvent(systemMessage);
+  }
 }

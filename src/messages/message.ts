@@ -13,7 +13,6 @@ export class Message<T> {
 
 /** An action is used to send a command, this will have one receiver. */
 export class Action<T> extends Message<T> {
-
   constructor(id: string, type: string, data: T, timestamp: Date, behavior = new Behavior()) {
     super(id, Category.Action, type, data, timestamp, behavior);
   }
@@ -26,5 +25,4 @@ export class Event<T> extends Message<T> {
   }
 
   actionId: string;
-
 }

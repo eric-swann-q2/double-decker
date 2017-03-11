@@ -1,4 +1,7 @@
 export class Behavior {
-  mustPlay: boolean = false;
-  playable: boolean = true;
+
+  constructor(
+    public mustPlay: boolean = false,
+    public playable: boolean = true,
+    public isSystem: boolean = false) { }
 }
