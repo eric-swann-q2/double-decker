@@ -6,7 +6,7 @@ import { Behavior } from "./messages/behavior";
 import { MessageContract } from "./messages/message-contract";
 import { Action, Event } from "./messages/message";
 import { ActionCallback, EventCallback } from "./messages/callbacks";
-import { SystemMessage, MessageStatusData } from "./messages/systemMessage";
+import { SystemMessageType, MessageStatusData } from "./messages/systemMessage";
 
 /** Interface describing all service bus operations */
 export interface IBus {
@@ -67,16 +67,16 @@ export class Bus implements IBus {
   /** Send an action to a registered receiver */
   send<T>(actionContract: MessageContract<T>): void {
     const action = this._messageFactory.CreateAction(actionContract);
-    this._emitSystemMessage(SystemMessage.ActionSent, action.id);
-
     this._logger.debug(`Double-Decker Bus: [send] : Sending action: ${action}`);
+    this._emitSystemMessage(SystemMessageType.ActionSent, action.id);
+
     this._emitter.emitAction(action)
       .then(result => {
         this._store.addAction(action);
-        this._emitSystemMessage(SystemMessage.ActionSent, action.id);
+        this._emitSystemMessage(SystemMessageType.ActionSent, action.id);
       })
       .catch(error => {
-        this._emitSystemMessage(SystemMessage.ActionErred, action.id, error);
+        this._emitSystemMessage(SystemMessageType.ActionErred, action.id, error);
       });
   }
 
@@ -101,14 +101,15 @@ export class Bus implements IBus {
   publish<T>(eventContract: MessageContract<T>): void {
     const event = this._messageFactory.CreateEvent(eventContract);
     this._logger.debug(`Double-Decker Bus: [publish] : Publishing event: ${event}`);
+    this._emitSystemMessage(SystemMessageType.EventHandled, event.id);
 
     this._emitter.emitEvent(event)
       .then(result => {
         this._store.addEvent(event);
-        this._emitSystemMessage(SystemMessage.EventPublished, event.id);
+        this._emitSystemMessage(SystemMessageType.EventPublished, event.id);
       })
       .catch(error => {
-        this._emitSystemMessage(SystemMessage.EventErred, event.id, error);
+        this._emitSystemMessage(SystemMessageType.EventErred, event.id, error);
       });
   }
 
@@ -117,14 +118,15 @@ export class Bus implements IBus {
     this.publish(new MessageContract(type, data));
   }
 
-  private _emitSystemMessage(type: SystemMessage, originalMessageId: string, error: Error = null) {
+  private _emitSystemMessage(type: SystemMessageType, originalMessageId: string, error: Error = null) {
     const systemMessage = this._messageFactory.CreateSystemEvent(type, new MessageStatusData(originalMessageId, error));
     this._logger.debug(`Double-Decker Bus: [emitSystemMessage] 
       : Emitting a system message: ${type} : ID ${systemMessage.id} : OriginalMessageId: ${originalMessageId}`);
-    if (type === SystemMessage.ActionErred || type === SystemMessage.EventErred) {
+    if (type === SystemMessageType.ActionErred || type === SystemMessageType.EventErred) {
       this._logger.error(`Double-Decker Bus: [emitSystemMessage] 
       : Message Failure: ${type} : ID ${systemMessage.id} : OriginalMessageId: ${originalMessageId} : Error: ${error}`);
     }
     this._emitter.emitEvent(systemMessage);
+    this._store.addSystemEvent(systemMessage);
   }
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"behavior.js","sourceRoot":"","sources":["../../../src/messages/behavior.ts"],"names":[],"mappings":";;AAAA;IAEE,kBACS,QAAyB,EACzB,UAA0B,EAC1B,QAAyB;QAFzB,yBAAA,EAAA,gBAAyB;QACzB,2BAAA,EAAA,iBAA0B;QAC1B,yBAAA,EAAA,gBAAyB;QAFzB,aAAQ,GAAR,QAAQ,CAAiB;QACzB,eAAU,GAAV,UAAU,CAAgB;QAC1B,aAAQ,GAAR,QAAQ,CAAiB;IAAI,CAAC;IACzC,eAAC;AAAD,CAAC,AAND,IAMC;AANY,4BAAQ"}

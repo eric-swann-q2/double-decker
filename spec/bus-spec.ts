@@ -17,7 +17,8 @@ const logger = new ConsoleLogger;
 
 describe('When using Action emitter', () => {
   const emitter = new Emitter(logger);
-  const bus: IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
+  const store = new MemoryStore();
+  const bus: IBus = new Bus(new MessageFactory(), emitter, store, logger);
 
   const receivedActions = new Array<Action<any>>();
   const actionReceiver: ActionCallback = action => { receivedActions.push(action); return receivedActions; }
@@ -29,10 +30,8 @@ describe('When using Action emitter', () => {
   });
 
   it('Can emit an action to the receiver', () => {
-    let resultPromise = bus.createAndSend("testActionType", { testProp: "testActionProp1" });
-
-    expect(resultPromise).to.eventually.not.be.undefined;
-    expect(resultPromise).to.eventually.have.property("type", "testActionType");
+    bus.createAndSend("testActionType", { testProp: "testActionProp1" });
+    expect(bus.lastAction.type).to.equal("testactiontype");
   });
 
   it('Records the last action', () => {
@@ -64,10 +63,8 @@ describe('When using Event emitter', () => {
   const bus: IBus = new Bus(new MessageFactory(), emitter, new MemoryStore(), logger);
 
   const receivedEvents = new Array<Event<any>>();
-  const eventSubscriber: EventCallback = event => { receivedEvents.push(event); return receivedEvents; }
-
-  const receivedEvents2 = new Array<Event<any>>();
-  const eventSubscriber2: EventCallback = event => { receivedEvents2.push(event); return receivedEvents2; }
+  const eventSubscriber: EventCallback = event => { receivedEvents.push(event); }
+  const eventSubscriber2: EventCallback = event => { receivedEvents.push(event); }
 
   it('Can add and get a subscriber', () => {
     bus.subscribe("testEventType", eventSubscriber);
@@ -76,14 +73,13 @@ describe('When using Event emitter', () => {
   });
 
   it('Can emit an event to the subscriber', () => {
-    let resultPromise = bus.createAndPublish("testEventType", { testProp: "testEventProp1" });
-
-    expect(resultPromise).to.eventually.not.be.undefined;
-    expect(resultPromise).to.eventually.have.property("type", "testEventType");
+    bus.createAndPublish("testEventType", { testProp: "testEventProp1" });
+    expect(bus.lastEvent.type).to.equal("testeventtype");
   });
 
-  it('Records the last event', () => {
-    expect(bus.lastEvent.data.testProp).to.equal("testEventProp1");
+  it('Records data from the last event', () => {
+    bus.createAndPublish("testEventType", { testProp: "testEventProp2" });
+    expect(bus.lastEvent.data.testProp).to.equal("testEventProp2");
   });
 
   it('Can add a second subscriber for same event type', () => {
@@ -96,8 +92,7 @@ describe('When using Event emitter', () => {
     receivedEvents.length = 0;
     let resultPromise = bus.createAndPublish("testEventType", { testProp: "testProp" });
 
-    expect(resultPromise).to.eventually.have.property("[0].id", "testEventMultiple");
-    expect(resultPromise).to.eventually.have.property("[0].id", "testEventMultiple");
+    expect(receivedEvents).to.have.length(2);
   });
 
   it('Can remove a subscriber', () => {

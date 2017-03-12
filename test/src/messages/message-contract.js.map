@@ -1,0 +1,1 @@
+{"version":3,"file":"message-contract.js","sourceRoot":"","sources":["../../../src/messages/message-contract.ts"],"names":[],"mappings":";;AAAA,uCAAsC;AAGtC;IACE,yBAEkB,IAAY,EAEZ,IAAO,EAEP,QAAyB;QAAzB,yBAAA,EAAA,eAAe,mBAAQ,EAAE;QAJzB,SAAI,GAAJ,IAAI,CAAQ;QAEZ,SAAI,GAAJ,IAAI,CAAG;QAEP,aAAQ,GAAR,QAAQ,CAAiB;IAAI,CAAC;IAClD,sBAAC;AAAD,CAAC,AARD,IAQC;AARY,0CAAe"}

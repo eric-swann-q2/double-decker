@@ -24,15 +24,16 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "clean": "rimraf lib",
+    "clean": "rimraf lib && rimraf test",
     "lint": "tslint --force --format verbose \"src/**/*.ts\"",
     "build": "npm run clean && npm run lint && tsc --version && tsc",
-    "test": "npm run build && mocha --compilers ts:ts-node/register --recursive test/**/*-spec.ts",
+    "build:test": "npm run clean && npm run lint && tsc -p ./tsconfig.test.json",
+    "test": "npm run build:test && mocha --recursive",
+
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",
-    "clean-prod": "rimraf dist",
     "compress": "uglifyjs --compress --in-source-map ./dist/index.js.map --source-map ./dist/index.min.js.map -o ./dist/index.min.js -- ./dist/index.js",
-    "build-prod": "npm run test && npm run clean-prod && tsc -p ./tsconfig.prod.json && npm run compress"
+    "build:prod": "npm run test && npm run build && rimraf dist && tsc -p ./tsconfig.prod.json && npm run compress"
   },
   "dependencies": {},
   "devDependencies": {
@@ -46,7 +47,6 @@
     "chai-datetime": "^1.4.1",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.0",
-    "ts-node": "^2.1.0",
     "tslint": "^4.4.0",
     "typescript": "^2.2.0",
     "uglify-js": "^2.8.5"

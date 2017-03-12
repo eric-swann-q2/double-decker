@@ -1,7 +1,7 @@
 import { Behavior } from "./behavior";
 import { Action, Event } from "./message";
 
-export enum SystemMessage {
+export enum SystemMessageType {
   ActionSent = 0,
   EventPublished,
   ActionHandled,
@@ -15,5 +15,4 @@ export class MessageStatusData {
   constructor(
     public messageId: string,
     public error: Error = null) { }
-
 }

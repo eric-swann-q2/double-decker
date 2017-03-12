@@ -3,17 +3,20 @@ import { ILogger } from "./logger";
 import { Category } from "./messages/category";
 import { IStore } from "./store";
 import { Action, Event, Message } from "./messages/message";
+import { MessageStatusData } from "./messages/systemMessage";
 
 export interface IPlayer<TMessage extends Message<any>> {
   readonly messages: TMessage[];
+  readonly systemEvents: Array<Event<MessageStatusData>>;
+
   readonly next: TMessage;
   readonly previous: TMessage;
 
   setHead(position: number): void;
   setHeadById(messageId: string): void;
 
-  play(length: number): Array<Promise<any>>;
-  playNext(): Promise<any>;
+  play(length: number): void;
+  playNext(): void;
 
   clear(): void;
 }
@@ -23,12 +26,16 @@ export interface IEventPlayer extends IPlayer<Event<any>> { }
 
 export abstract class Player<TMessage extends Message<any>> implements IPlayer<TMessage> {
 
-  constructor(private _logger: ILogger) { }
+  constructor(protected _store: IStore, private _logger: ILogger) { }
 
   readonly abstract messages: TMessage[];
 
   protected _headPosition = 0;
   protected readonly abstract _category: Category;
+
+  get systemEvents(): Array<Event<MessageStatusData>> {
+    return this._store.systemEvents;
+  }
 
   get next(): TMessage {
     if (this._headPosition < this.messages.length) {
@@ -67,19 +74,19 @@ export abstract class Player<TMessage extends Message<any>> implements IPlayer<T
     this._headPosition = position;
   }
 
-  playNext(): Promise<any> {
+  playNext(): void {
     this._logger.debug(`Double-Decker Hub: [play] : Playing ${this._category} : ${this.next}`);
-    const result = this._playNext();
+    if (this.next.behavior.shouldPlay) {
+      this._playNext(this.next);
+    }
     this._headPosition++;
-    return result;
   }
 
-  play(length: number): Array<Promise<any>> {
+  play(length: number): void {
     const results = new Array<Promise<any>>();
     for (let i = 0; i < length; i++) {
-      results.push(this.playNext());
+      this.playNext();
     }
-    return results;
   }
 
   clear(): void {
@@ -89,32 +96,29 @@ export abstract class Player<TMessage extends Message<any>> implements IPlayer<T
   }
 
   protected abstract _clearMessages(): void;
-  protected abstract _playNext(): Promise<any>;
+  protected abstract _playNext(next: TMessage): void;
 
   protected _throwError(errorMessage: string): void {
     this._logger.error(errorMessage);
     throw new Error(errorMessage);
   }
-
 }
 
 export class ActionPlayer extends Player<Action<any>> implements IActionPlayer {
 
   constructor(
     private readonly _emitter: IEmitter,
-    private readonly _store: IStore,
+    store: IStore,
     private readonly logger: ILogger) {
-    super(logger);
+    super(store, logger);
   }
 
   get messages() { return this._store.actions; }
 
   protected readonly _category: Category = Category.Action;
 
-  protected _playNext(): Promise<any> {
-    if (this.next.behavior.playable) {
-      return this._emitter.emitAction(this.next);
-    }
+  protected _playNext(next: Action<any>): void {
+    this._emitter.emitAction(this.next);
   }
 
   protected _clearMessages(): void {
@@ -126,17 +130,17 @@ export class EventPlayer extends Player<Event<any>> implements IEventPlayer {
 
   constructor(
     private readonly _emitter: IEmitter,
-    private readonly _store: IStore,
+    store: IStore,
     private readonly logger: ILogger) {
-    super(logger);
+    super(store, logger);
   }
 
   get messages() { return this._store.events; }
 
   protected readonly _category: Category = Category.Event;
 
-  protected _playNext(): Promise<any> {
-    return this._emitter.emitEvent(this.next);
+  protected _playNext(next: Event<any>): void {
+    this._emitter.emitEvent(next);
   }
 
   protected _clearMessages(): void {

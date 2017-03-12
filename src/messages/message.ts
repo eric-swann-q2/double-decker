@@ -8,7 +8,7 @@ export class Message<T> {
     public readonly type: string,
     public readonly data: T,
     public readonly timestamp: Date,
-    public readonly behavior) { }
+    public readonly behavior: Behavior) { }
 }
 
 /** An action is used to send a command, this will have one receiver. */

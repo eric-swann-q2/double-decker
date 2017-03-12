@@ -24,26 +24,27 @@ describe('When using Action player', () => {
   const player: IActionPlayer = new ActionPlayer(emitter, store, logger);
 
   const receivedActions = new Array<Action<any>>();
-  const actionReceiver: ActionCallback = action => { receivedActions.push(action); return receivedActions; }
+  const actionReceiver: ActionCallback = action => {
+    receivedActions.push(action);
+  }
 
   bus.receive("testActionType", actionReceiver);
-  let resultPromise = bus.createAndSend("testActionType", { itemId: "test1" });
-  let resultPromise2 = bus.createAndSend("testActionType", { itemId: "test2" });
-  let resultPromise3 = bus.createAndSend("testActionType", { itemId: "test3" });
-  let resultPromise4 = bus.createAndSend("testActionType", { itemId: "test4" });
-  let resultPromise5 = bus.createAndSend("testActionType", { itemId: "test5" });
-  let resultPromise6 = bus.createAndSend("testActionType", { itemId: "test6" });
+  bus.createAndSend("testActionType", { itemId: "test1" });
+  bus.createAndSend("testActionType", { itemId: "test2" });
+  bus.createAndSend("testActionType", { itemId: "test3" });
+  bus.createAndSend("testActionType", { itemId: "test4" });
+  bus.createAndSend("testActionType", { itemId: "test5" });
+  bus.createAndSend("testActionType", { itemId: "test6" });
 
   it('Can see all published actions', () => {
     expect(player.messages.length).to.equal(6);
+    expect(receivedActions.length).to.equal(6);
   });
 
   it('Can play the first action', () => {
     receivedActions.length = 0;
-    let resultPromise = player.playNext();
-
-    expect(resultPromise).to.eventually.not.be.undefined;
-    expect(resultPromise).to.eventually.have.property("type", "testActionType");
+    player.playNext();
+    expect(receivedActions[0].data.itemId).to.equal("test1");
   });
 
   it('Playing message moves head', () => {
@@ -82,13 +83,16 @@ describe('When using Event player', () => {
   const player: IEventPlayer = new EventPlayer(emitter, store, logger);
 
   const subscribedEvents = new Array<Event<any>>();
-  const eventSubscriber: EventCallback = event => { subscribedEvents.push(event); return subscribedEvents; }
+  const eventSubscriber: EventCallback = event => {
+      subscribedEvents.push(event);
+  }
 
+  store.clearActions();
   bus.subscribe("testEventType", eventSubscriber);
-  let resultPromise = bus.createAndPublish("testEventType", { itemId: "test1" });
-  let resultPromise2 = bus.createAndPublish("testEventType", { itemId: "test2" });
-  let resultPromise3 = bus.createAndPublish("testEventType", { itemId: "test3" });
-  let resultPromise4 = bus.createAndPublish("testEventType", { itemId: "test4" });
+  bus.createAndPublish("testEventType", { itemId: "test1" });
+  bus.createAndPublish("testEventType", { itemId: "test2" });
+  bus.createAndPublish("testEventType", { itemId: "test3" });
+  bus.createAndPublish("testEventType", { itemId: "test4" });
 
   it('Can see all published events', () => {
     expect(player.messages.length).to.equal(4);
@@ -96,10 +100,9 @@ describe('When using Event player', () => {
 
   it('Can play the first event', () => {
     subscribedEvents.length = 0;
-    let resultPromise = player.playNext();
+    player.playNext();
 
-    expect(resultPromise).to.eventually.not.be.undefined;
-    expect(resultPromise).to.eventually.have.property("type", "testEventType");
+    expect(subscribedEvents[0].data.itemId).to.equal("test1");
   });
 
   it('Playing message moves head', () => {
